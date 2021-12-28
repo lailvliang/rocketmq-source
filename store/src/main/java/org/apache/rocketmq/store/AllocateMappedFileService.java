@@ -72,7 +72,7 @@ public class AllocateMappedFileService extends ServiceThread {
         boolean nextPutOK = this.requestTable.putIfAbsent(nextFilePath, nextReq) == null;
 
         if (nextPutOK) {
-            // 创建失败
+            // 创建成功
             if (canSubmitRequests <= 0) {
                 log.warn("[NOTIFYME]TransientStorePool is not enough, so create mapped file error, " +
                     "RequestQueueSize : {}, StorePoolSize: {}", this.requestQueue.size(), this.messageStore.getTransientStorePool().availableBufferNums());
@@ -165,7 +165,7 @@ public class AllocateMappedFileService extends ServiceThread {
         boolean isSuccess = false;
         AllocateRequest req = null;
         try {
-            // 获得堆顶的 AllocateRequest
+            // 获得堆顶的 AllocateRequest 如果是ComitLog 则取最前创建的AllocateRequest 或者说offset最小的AllocateRequest
             req = this.requestQueue.take();
             AllocateRequest expectedRequest = this.requestTable.get(req.getFilePath());
             // timeout，request 被删除了
@@ -174,7 +174,7 @@ public class AllocateMappedFileService extends ServiceThread {
                     + req.getFileSize());
                 return true;
             }
-            if (expectedRequest != req) {
+            if (expectedRequest != req) { //一般来说不可能不相等
                 log.warn("never expected here,  maybe cause timeout " + req.getFilePath() + " "
                     + req.getFileSize() + ", req:" + req + ", expectedRequest:" + expectedRequest);
                 return true;
@@ -205,11 +205,11 @@ public class AllocateMappedFileService extends ServiceThread {
                 }
 
                 // pre write mappedFile
-                // fileSize 超过 1G，其实就是 CommitLog
+                // fileSize 超过 1G，其实就是 CommitLog  （CommitLog 是1G ConsumeQueue 是300000 * 20）
                 if (mappedFile.getFileSize() >= this.messageStore.getMessageStoreConfig()
                     .getMappedFileSizeCommitLog()
                     &&
-                    this.messageStore.getMessageStoreConfig().isWarmMapedFileEnable()) {
+                    this.messageStore.getMessageStoreConfig().isWarmMapedFileEnable()) {  //如果是commitLog 并且开启 warmMapedFileEnable 预热
                     mappedFile.warmMappedFile(this.messageStore.getMessageStoreConfig().getFlushDiskType(),
                         this.messageStore.getMessageStoreConfig().getFlushLeastPagesWhenWarmMapedFile());
                 }

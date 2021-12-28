@@ -225,7 +225,7 @@ public class BrokerStartup {
                 messageStoreConfig);
             // remember all configs to prevent discard
             controller.getConfiguration().registerConfig(properties);
-
+            //controller.registerConsumeMessageHook();
             // 初始化 controller
             boolean initResult = controller.initialize();
             if (!initResult) {

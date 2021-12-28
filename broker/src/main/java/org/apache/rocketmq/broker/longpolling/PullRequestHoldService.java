@@ -125,7 +125,7 @@ public class PullRequestHoldService extends ServiceThread {
         notifyMessageArriving(topic, queueId, maxOffset, null, 0, null, null);
     }
 
-    // NotifyMessageArrivingListener 中也会调用这个方法
+    // NotifyMessageArrivingListener 和 PullRequestHoldService 都会调用这个方法  前者是写入新的消息成功  后者是线程长轮询和短轮询的时间调用
     public void notifyMessageArriving(final String topic, final int queueId, final long maxOffset, final Long tagsCode,
         long msgStoreTime, byte[] filterBitMap, Map<String, String> properties) {
         String key = this.buildKey(topic, queueId);
@@ -150,7 +150,7 @@ public class PullRequestHoldService extends ServiceThread {
                         }
 
                         if (match) {
-                            try {
+                            try { //返回消息给消费端
                                 this.brokerController.getPullMessageProcessor().executeRequestWhenWakeup(request.getClientChannel(),
                                     request.getRequestCommand());
                             } catch (Throwable e) {
@@ -159,7 +159,7 @@ public class PullRequestHoldService extends ServiceThread {
                             continue;
                         }
                     }
-
+                    //如果大于长轮询或者短轮询的时间 尝试获取
                     if (System.currentTimeMillis() >= (request.getSuspendTimestamp() + request.getTimeoutMillis())) {
                         try {
                             this.brokerController.getPullMessageProcessor().executeRequestWhenWakeup(request.getClientChannel(),

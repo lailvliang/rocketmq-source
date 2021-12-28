@@ -611,7 +611,7 @@ public class MessageStoreConfig {
     /**
      * Enable transient commitLog store pool only if transientStorePoolEnable is true and the FlushDiskType is
      * ASYNC_FLUSH
-     *
+     * 是否开启堆外内存存储消息 性能更好 必须符合以下条件 transientStorePoolEnable为true && 异步刷盘
      * @return <tt>true</tt> or <tt>false</tt>
      */
     public boolean isTransientStorePoolEnable() {

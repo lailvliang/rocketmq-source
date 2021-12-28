@@ -242,8 +242,8 @@ public class RemotingCommand {
     public CommandCustomHeader decodeCommandCustomHeader(
         Class<? extends CommandCustomHeader> classHeader) throws RemotingCommandException {
         CommandCustomHeader objectHeader;
-        try {CommandCustomHeader
-            objectHeader = classHeader.newInstance();  // 利用反射创建一个 CommandCustomHeader 实例
+        try {
+            objectHeader = classHeader.newInstance() ; // 利用反射创建一个 CommandCustomHeader 实例
         } catch (InstantiationException e) {
             return null;
         } catch (IllegalAccessException e) {

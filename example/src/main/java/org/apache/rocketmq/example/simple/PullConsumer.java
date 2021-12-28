@@ -16,12 +16,14 @@
  */
 package org.apache.rocketmq.example.simple;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import org.apache.rocketmq.client.consumer.DefaultMQPullConsumer;
 import org.apache.rocketmq.client.consumer.PullResult;
 import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.common.message.MessageQueue;
 
 // 同步拉取消息
@@ -33,14 +35,17 @@ public class PullConsumer {
         consumer.setNamesrvAddr("127.0.0.1:9876");
         consumer.start();
 
-        Set<MessageQueue> mqs = consumer.fetchSubscribeMessageQueues("broker-a");
+        Set<MessageQueue> mqs = consumer.fetchSubscribeMessageQueues("TopicTest");
         for (MessageQueue mq : mqs) {
             System.out.printf("Consume from the queue: %s%n", mq);
             SINGLE_MQ:
-            while (true) {
                 try {
                     PullResult pullResult =
-                        consumer.pullBlockIfNotFound(mq, null, getMessageQueueOffset(mq), 32);
+                        consumer.pullBlockIfNotFound(mq, null, getMessageQueueOffset(mq), 10);
+
+                    for(MessageExt msg: pullResult.getMsgFoundList()){
+                        System.out.println(new String(msg.getBody()));
+                    }
                     System.out.printf("%s%n", pullResult);
                     putMessageQueueOffset(mq, pullResult.getNextBeginOffset());
                     switch (pullResult.getPullStatus()) {
@@ -58,7 +63,6 @@ public class PullConsumer {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-            }
         }
 
         consumer.shutdown();

@@ -223,7 +223,7 @@ public class MappedFileQueue {
 
         // array 中一个 MappedFile 都没有
         if (mappedFileLast == null) {
-            // startOffset - 取余
+            // startOffset - 取余  创建第1个
             createOffset = startOffset - (startOffset % this.mappedFileSize);
         }
 
@@ -239,7 +239,7 @@ public class MappedFileQueue {
                 + UtilAll.offset2FileName(createOffset + this.mappedFileSize);
             MappedFile mappedFile = null;
 
-            // 定义了 AllocateMappedFileService
+            // 定义了 AllocateMappedFileService  如果allocateMappedFileService 不为null 则是commitLog  否则是ConsumeQueue
             if (this.allocateMappedFileService != null) {
                 mappedFile = this.allocateMappedFileService.putRequestAndReturnMappedFile(nextFilePath,
                     nextNextFilePath, this.mappedFileSize);
@@ -534,7 +534,7 @@ public class MappedFileQueue {
                         this.mappedFileSize,
                         this.mappedFiles.size());
                 } else {
-                    // 获取下标
+                    // 获取下标 第N个文件 - 0/30w*20
                     int index = (int) ((offset / this.mappedFileSize) - (firstMappedFile.getFileFromOffset() / this.mappedFileSize));
                     MappedFile targetFile = null;
                     try {

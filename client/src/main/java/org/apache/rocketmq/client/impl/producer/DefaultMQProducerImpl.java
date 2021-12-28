@@ -543,13 +543,13 @@ public class DefaultMQProducerImpl implements MQProducerInner {
             MessageQueue mq = null;  // 记录上一次投递选择的 MQ
             Exception exception = null;
             SendResult sendResult = null;
-            // 同步的话，重试次数会比异步和单向多很多
+            // 同步的话，才会重试 默认3次
             int timesTotal = communicationMode == CommunicationMode.SYNC ? 1 + this.defaultMQProducer.getRetryTimesWhenSendFailed() : 1;
             int times = 0;
             String[] brokersSent = new String[timesTotal];  // 记录本次 send 到哪个 broker
             for (; times < timesTotal; times++) {
-                String lastBrokerName = null == mq ? null : mq.getBrokerName();  // 上一次 send 的 brokerName
-                MessageQueue mqSelected = this.selectOneMessageQueue(topicPublishInfo, lastBrokerName);
+                String lastBrokerName = null == mq ? null : mq.getBrokerName();  // 如果第1次发失败 则lastBrokerName不会为null 下一步会选择一个新的mq和brokerName
+                MessageQueue mqSelected = this.selectOneMessageQueue(topicPublishInfo, lastBrokerName); //轮询mq  mq可以是在不同的Broker上 相当于轮询Broker发送
                 if (mqSelected != null) {
                     mq = mqSelected;
                     brokersSent[times] = mq.getBrokerName();  // 写入本次 MQ 所在的 broker
@@ -688,7 +688,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
         if (topicPublishInfo.isHaveTopicRouterInfo() || topicPublishInfo.ok()) {
             return topicPublishInfo;
         } else {
-            this.mQClientFactory.updateTopicRouteInfoFromNameServer(topic, true, this.defaultMQProducer);
+            this.mQClientFactory.updateTopicRouteInfoFromNameServer(topic, true, this.defaultMQProducer); //在NameServer找不到的topic 会进入这里
             topicPublishInfo = this.topicPublishInfoTable.get(topic);
             return topicPublishInfo;
         }
@@ -728,7 +728,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
 
                 int sysFlag = 0;
                 boolean msgBodyCompressed = false;
-                if (this.tryToCompressMessage(msg)) {
+                if (this.tryToCompressMessage(msg)) { //尝试压缩消息 msg大于配置compressMsgBodyOverHowmuch  默认1024*4 则压缩
                     sysFlag |= MessageSysFlag.COMPRESSED_FLAG;
                     msgBodyCompressed = true;
                 }
@@ -905,7 +905,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
         }
         byte[] body = msg.getBody();
         if (body != null) {
-            // body 大小大于上限，压缩
+            // body 大小大于上限，msg大于配置compressMsgBodyOverHowmuch  默认1024*4 则压缩
             if (body.length >= this.defaultMQProducer.getCompressMsgBodyOverHowmuch()) {
                 try {
                     byte[] data = UtilAll.compress(body, zipCompressLevel);

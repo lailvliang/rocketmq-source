@@ -27,7 +27,7 @@ import org.apache.rocketmq.common.MixAll;
 public class BrokerData implements Comparable<BrokerData> {
     private String cluster;  // 集群名称
     private String brokerName;  // broker 名称
-    private HashMap<Long/* brokerId */, String/* broker address */> brokerAddrs;
+    private HashMap<Long/* brokerId */, String/* broker address */> brokerAddrs; //broker 主从总数
 
     // 这个最好使用 ThreadLocalRandom.current().nextInt()，可以避免在多线程场景下对 seed 的竞争
     private final Random random = new Random();

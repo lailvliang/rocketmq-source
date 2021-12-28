@@ -571,7 +571,7 @@ public class DefaultMessageStore implements MessageStore {
                         final boolean diskFallRecorded = this.messageStoreConfig.isDiskFallRecorded();
                         ConsumeQueueExt.CqExtUnit cqExtUnit = new ConsumeQueueExt.CqExtUnit();
                         for (; i < bufferConsumeQueue.getSize() && i < maxFilterMessageCount; i += ConsumeQueue.CQ_STORE_UNIT_SIZE) {
-                            long offsetPy = bufferConsumeQueue.getByteBuffer().getLong();  // 物理偏移
+                            long offsetPy = bufferConsumeQueue.getByteBuffer().getLong();  // commitLog物理偏移
                             int sizePy = bufferConsumeQueue.getByteBuffer().getInt();  // 长度
                             long tagsCode = bufferConsumeQueue.getByteBuffer().getLong();
 
@@ -903,7 +903,7 @@ public class DefaultMessageStore implements MessageStore {
 
         boolean result = this.commitLog.appendData(startOffset, data);
         if (result) {
-            this.reputMessageService.wakeup();
+            this.reputMessageService.wakeup();//异步写入consumerQueue和index  并且设置了长轮询的话 会通知客户端返回消息
         } else {
             log.error("appendToPhyQueue failed " + startOffset + " " + data.length);
         }
@@ -1957,8 +1957,8 @@ public class DefaultMessageStore implements MessageStore {
 
                             if (dispatchRequest.isSuccess()) {
                                 if (size > 0) {
-                                    DefaultMessageStore.this.doDispatch(dispatchRequest);
-                                    // Master broker 打开了对长轮询的支持，通知 NotifyMessageArrivingListener 有新的消息到来
+                                    DefaultMessageStore.this.doDispatch(dispatchRequest); //写入ConsumerQueue和index
+                                    // Master broker 打开了对长轮询的支持，通知消费端 NotifyMessageArrivingListener 有新的消息到来
                                     if (BrokerRole.SLAVE != DefaultMessageStore.this.getMessageStoreConfig().getBrokerRole()
                                         && DefaultMessageStore.this.brokerConfig.isLongPollingEnable()) {
                                         DefaultMessageStore.this.messageArrivingListener.arriving(dispatchRequest.getTopic(),

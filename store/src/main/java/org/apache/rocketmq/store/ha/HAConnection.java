@@ -169,11 +169,14 @@ public class HAConnection {
                             // 这里没有用 netty 的解码器做黏包处理，而是自己做的，从这里的数据处理来看，slave 每次给 master 回的 ack
                             // offset 就是一个 8 字节的 long 整型变量
                             // (this.byteBufferRead.position() % 8) 是最后没有读满 8 个字节的几个字节。 pos就是上1个 Long 的最后一个字节
+                            //假设slave发送了3次 每次8个字节 总共24字节  master的这次读只收到23字节 则 pos = 23 - 23%8 = 16，
+                            // 则readOffset = byteBufferRead.getLong(8) 从index8开始读8个字节 意思是读8-16位置的值
+                            // 由于16-23不是8字节不准确 所以取8-16的值 代表的是slave最近一次发送最新的offset的值
                             int pos = this.byteBufferRead.position() - (this.byteBufferRead.position() % 8);
-                            long readOffset = this.byteBufferRead.getLong(pos - 8);  // ack offset，从上一个8字节的最后一字节开始往前读8字节
+                            long readOffset = this.byteBufferRead.getLong(pos - 8);  // ack offset，从pos上一个8字节的最后一字节开始往后读8字节
                             this.processPosition = pos;
 
-                            HAConnection.this.slaveAckOffset = readOffset;
+                            HAConnection.this.slaveAckOffset = readOffset;   //读出slave offset偏移量的值
                             if (HAConnection.this.slaveRequestOffset < 0) {
                                 // 初始值是 -1
                                 HAConnection.this.slaveRequestOffset = readOffset;
@@ -217,7 +220,7 @@ public class HAConnection {
         public WriteSocketService(final SocketChannel socketChannel) throws IOException {
             this.selector = RemotingUtil.openSelector();
             this.socketChannel = socketChannel;
-            this.socketChannel.register(this.selector, SelectionKey.OP_WRITE);  // write channel
+                this.socketChannel.register(this.selector, SelectionKey.OP_WRITE);  // write channel
             this.setDaemon(true);  // 设置为常驻线程
         }
 

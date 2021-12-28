@@ -53,7 +53,7 @@ public class MappedFile extends ReferenceResource {
     protected final AtomicInteger wrotePosition = new AtomicInteger(0);  // 存放当前的位置
     protected final AtomicInteger committedPosition = new AtomicInteger(0);
     private final AtomicInteger flushedPosition = new AtomicInteger(0);
-    protected int fileSize;  // 文件大小
+    protected int fileSize;  // 文件大小 默认为 1024 * 1024 * 1024，Consumequeue 默认为 30w * 20
     protected FileChannel fileChannel;
     /**
      * Message will put to here first, and then reput to FileChannel if writeBuffer is not null.
@@ -532,7 +532,7 @@ public class MappedFile extends ReferenceResource {
     }
 
     // 所谓预热，就是把超过设定大小（默认 1G）的文件，每间隔 4K（内存分页的大小）写一个 byte
-    // 累积到一定量（16M）的时候，做刷盘动作 (数据真正的落在本地磁盘)
+    // 累积到一定量（16M）的时候，做刷盘动作 (数据真正的落在本地磁盘)  pages 默认4kb
     public void warmMappedFile(FlushDiskType type, int pages) {
         long beginTime = System.currentTimeMillis();
         // 所谓 slice, 可以理解为 bytebuffer 中剩余容量的一个快照

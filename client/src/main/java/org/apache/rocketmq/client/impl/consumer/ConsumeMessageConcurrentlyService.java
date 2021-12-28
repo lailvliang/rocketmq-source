@@ -428,7 +428,7 @@ public class ConsumeMessageConcurrentlyService implements ConsumeMessageService 
                 hasException = true;
             }
             long consumeRT = System.currentTimeMillis() - beginTimestamp;
-            if (null == status) {
+            if (null == status) { //消费者 自定义消费的方法返回值
                 if (hasException) {
                     returnType = ConsumeReturnType.EXCEPTION;
                 } else {

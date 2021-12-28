@@ -378,7 +378,7 @@ public class HAService {
             }
         }
 
-        // 是否到时间上报 offset
+        // 是否到时间上报 offset  5秒上报一次
         private boolean isTimeToReportOffset() {
             // 和上次写的时间间隔
             long interval =
@@ -422,7 +422,7 @@ public class HAService {
                 this.byteBufferBackup.put(this.byteBufferRead);
             }
 
-            this.swapByteBuffer();
+            this.swapByteBuffer(); //把原来的byteBufferRead备份起来
 
             this.byteBufferRead.position(remain);
             this.byteBufferRead.limit(READ_MAX_BUFFER_SIZE);
@@ -441,7 +441,7 @@ public class HAService {
             int readSizeZeroTimes = 0;
             while (this.byteBufferRead.hasRemaining()) {
                 try {
-                    int readSize = this.socketChannel.read(this.byteBufferRead);
+                    int readSize = this.socketChannel.read(this.byteBufferRead);  //一次接收4M
                     if (readSize > 0) {
                         readSizeZeroTimes = 0;
                         boolean result = this.dispatchReadRequest();
@@ -473,7 +473,7 @@ public class HAService {
             int readSocketPos = this.byteBufferRead.position();
 
             while (true) {
-                int diff = this.byteBufferRead.position() - this.dispatchPosition;
+                int diff = this.byteBufferRead.position() - this.dispatchPosition; //diff这次master读的字节数
                 if (diff >= msgHeaderSize) {  // 收满了 12 个字节
                     long masterPhyOffset = this.byteBufferRead.getLong(this.dispatchPosition);  // 物理偏移
                     int bodySize = this.byteBufferRead.getInt(this.dispatchPosition + 8);  // size
@@ -509,7 +509,7 @@ public class HAService {
                 }
 
                 if (!this.byteBufferRead.hasRemaining()) {
-                    this.reallocateByteBuffer();
+                    this.reallocateByteBuffer(); //如果读到的信息不超过12字节 需要将其备份起来，等待一下读到更多的字节数
                 }
 
                 break;
@@ -593,7 +593,7 @@ public class HAService {
             while (!this.isStopped()) {
                 try {
                     if (this.connectMaster()) {
-                        // 到了心跳的时间
+                        // 到了心跳的时间 默认5秒上报一次
                         if (this.isTimeToReportOffset()) {
                             boolean result = this.reportSlaveMaxOffset(this.currentReportedOffset);
                             if (!result) {

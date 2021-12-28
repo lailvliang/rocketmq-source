@@ -40,7 +40,7 @@ public class ConsumerOffsetManager extends ConfigManager {
 
     // 所有 topic 的 offset 信息都存储在这个 table 中，记录消费者分组对 topic 的某一个 queue 的消费位点
     // topic 和 group 用 @ 相连，这个 topic 和 queueId，topic 和 group 之间的分隔符其实可以用一个固定的
-    // 一致性会好一些
+    // 一致性会好一些 %RETRY%please_rename_unique_group_name_6
     private ConcurrentMap<String/* topic@group */, ConcurrentMap<Integer, Long>> offsetTable =
         new ConcurrentHashMap<String, ConcurrentMap<Integer, Long>>(512);
 

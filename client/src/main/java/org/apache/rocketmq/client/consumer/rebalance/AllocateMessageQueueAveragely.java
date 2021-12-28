@@ -66,6 +66,7 @@ public class AllocateMessageQueueAveragely implements AllocateMessageQueueStrate
         for (int i = 0; i < range; i++) {
             result.add(mqAll.get((startIndex + i) % mqAll.size()));
         }
+        //如果用此算法 当consumer数量大MessageQueue数量时  多出来的consumer不会有消息消费
         return result;
     }
 
